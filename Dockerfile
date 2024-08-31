@@ -21,9 +21,6 @@ COPY . .
 RUN mkdir java-code
 RUN mkdir output
 
-# Set environment variable for limiting CPU speed (Optional)
-ENV CPU_LIMIT=100000
-
 # Expose the port your app runs on
 EXPOSE 3000
 

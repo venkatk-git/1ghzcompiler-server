@@ -5,11 +5,16 @@ const path = require("path");
 
 const app = express();
 const port = 3000;
+const TIME_LIMIT_MS = 1000;
 
 app.use(express.json());
 
 const javaCodeDir = "java-code";
 const outputDir = "output";
+
+app.get("/", (req, res) => {
+  res.send("Hi!");
+});
 
 app.post("/compile", (req, res) => {
   const javaCode = req.body.code;
@@ -36,6 +41,8 @@ app.post("/compile", (req, res) => {
   const javaFile = path.join(javaCodeDir, `${className}.java`);
   fs.writeFileSync(javaFile, javaCode);
 
+  const startTime = Date.now();
+
   // Compile the Java code
   const compilerProcess = spawn("javac", ["-d", outputDir, javaFile]);
 
@@ -49,6 +56,14 @@ app.post("/compile", (req, res) => {
   });
 
   compilerProcess.on("close", (code) => {
+    const elapsedTime = Date.now() - startTime;
+
+    if (elapsedTime > TIME_LIMIT_MS) {
+      compilerProcess.kill();
+      res.status(500).send({ error: "Compilation exceeded time limit" });
+      return;
+    }
+
     if (code === 0) {
       // Compilation successful
       const fullClassName = packageName
