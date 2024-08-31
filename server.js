@@ -2,10 +2,11 @@ const express = require("express");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const { extractClassName, extractPackageName } = require("./utils/helpers.js");
+const { TIME_LIMIT_MS } = require("./utils/contants.js");
 
 const app = express();
 const port = 3000;
-const TIME_LIMIT_MS = 1000;
 
 app.use(express.json());
 
@@ -13,7 +14,25 @@ const javaCodeDir = "java-code";
 const outputDir = "output";
 
 app.get("/", (req, res) => {
-  res.send("Hi!");
+  let code = `public class HelloWorld {
+    public static void main(String[] args) {
+      int sum = 0;
+      for(int i = 0; i < 100; i++)
+        sum += i;
+      System.out.println(sum);
+    }
+}`;
+
+  code = code
+    .split("\n")
+    .map((line) => line.trim())
+    .join("");
+
+  let jsonCode = JSON.stringify(code);
+  if (jsonCode.startsWith('"') && jsonCode.endsWith('"'))
+    jsonCode = jsonCode.slice(1, -1);
+
+  res.json(jsonCode);
 });
 
 app.post("/compile", (req, res) => {
@@ -41,10 +60,13 @@ app.post("/compile", (req, res) => {
   const javaFile = path.join(javaCodeDir, `${className}.java`);
   fs.writeFileSync(javaFile, javaCode);
 
-  const startTime = Date.now();
-
   // Compile the Java code
   const compilerProcess = spawn("javac", ["-d", outputDir, javaFile]);
+
+  // const compileTimeout = setTimeout(() => {
+  //   compilerProcess.kill();
+  //   res.status(500).send({ error: "Compilation Time Limit Exceeded" });
+  // }, TIME_LIMIT_MS);
 
   compilerProcess.stdout.on("data", (data) => {
     console.log(`stdout: ${data}`);
@@ -56,13 +78,7 @@ app.post("/compile", (req, res) => {
   });
 
   compilerProcess.on("close", (code) => {
-    const elapsedTime = Date.now() - startTime;
-
-    if (elapsedTime > TIME_LIMIT_MS) {
-      compilerProcess.kill();
-      res.status(500).send({ error: "Compilation exceeded time limit" });
-      return;
-    }
+    // clearTimeout(compileTimeout);
 
     if (code === 0) {
       // Compilation successful
@@ -73,45 +89,31 @@ app.post("/compile", (req, res) => {
       // Execute the compiled Java program
       const javaProcess = spawn("java", ["-cp", outputDir, fullClassName]);
 
+      // const execTimeout = setTimeout(() => {
+      //   javaProcess.kill();
+      //   res.status(500).send({ error: "Execution Time Limit Exceeded" });
+      // }, TIME_LIMIT_MS);
+
       javaProcess.stdout.on("data", (data) => {
+        // clearTimeout(execTimeout);
         res.send({ output: data.toString() });
       });
 
       javaProcess.stderr.on("data", (data) => {
         console.error(`stderr: ${data}`);
+        // clearTimeout(execTimeout);
         res.status(500).send({ error: data.toString() });
       });
     } else {
       // Compilation failed
       res.status(500).send({ error: "Compilation error" });
+      // clearTimeout(execTimeout);
     }
 
     // Clean up the temporary Java file
     fs.unlinkSync(javaFile);
   });
 });
-
-// Function to extract the package name from the Java code
-function extractPackageName(javaCode) {
-  const regex = /package (\w+(?:\.\w+)*)/;
-  const match = javaCode.match(regex);
-  if (match) {
-    return match[1];
-  } else {
-    return "";
-  }
-}
-
-// Function to extract the class name from the Java code
-function extractClassName(javaCode) {
-  const regex = /public class (\w+)/;
-  const match = javaCode.match(regex);
-  if (match) {
-    return match[1];
-  } else {
-    throw new Error("Could not extract class name from Java code");
-  }
-}
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
