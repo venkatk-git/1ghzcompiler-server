@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const port = 3008;
+const port = 3000;
 
 app.use(express.json());
 
