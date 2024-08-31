@@ -1,0 +1,49 @@
+# Ignore files and directories that are not essential to the project
+
+# Compiled source code
+*.class
+*.exe
+*.o
+*.so
+
+# IDE and editor files
+*.iml
+*.ipynb
+*.swp
+*.swo
+*.vscode/
+.idea/
+.vs/
+
+# Build and dependency files
+node_modules/
+bower_components/
+target/
+dist/
+build/
+
+# Log files
+*.log
+npm-debug.log
+
+# OS and system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*~
+*.bak
+
+# Config files
+*.conf
+*.cfg
+*.ini
+
+# Other files and directories that are not essential to the project
+coverage/
+docs/
+examples/
+tests/

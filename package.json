@@ -1,0 +1,17 @@
+{
+  "name": "1ghzcompiler-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4"
+  }
+}
