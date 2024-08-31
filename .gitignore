@@ -1,4 +1,5 @@
 # Ignore files and directories that are not essential to the project
+.gitignore
 
 # Compiled source code
 *.class
